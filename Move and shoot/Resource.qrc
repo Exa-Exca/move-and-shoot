@@ -1,0 +1,32 @@
+<RCC>
+    <qresource prefix="/">
+        <file>player.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix1">
+        <file>music.mp3</file>
+    </qresource>
+    <qresource prefix="/new/prefix2">
+        <file>bullet.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix3">
+        <file>background.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix4">
+        <file>black_area.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix5">
+        <file>pin.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix6">
+        <file>auto_enemy.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix7">
+        <file>enemy_bullet.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix8">
+        <file>boss_1.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix9">
+        <file>boss_1_music.mp3</file>
+    </qresource>
+</RCC>
