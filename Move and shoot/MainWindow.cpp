@@ -344,7 +344,7 @@ void MainWindow::resetgame() {
     game_over = false;
     speedstatus = 1;
     m_speed = 300;
-    self_blood = 5;
+    self_blood = 10;
     score = 0;
     m_alltime_1 = 0;
     m_alltime_2 = 0;
@@ -366,6 +366,7 @@ void MainWindow::resetgame() {
     vol_status = false;
     vol = 0.5;
     boss_1_accumulation = 0;
+    boss_1_blood = 10000;
     //所有实体数组清楚
     auto_enemy.clear(); blood.clear(); theta.clear(); random_position.clear(); enemy_fire_cooldown.clear();
     angular_speed.clear(); enemy_radius.clear();
@@ -618,7 +619,7 @@ void MainWindow::onTimerTick()
         auto_enemy[i].setX(300 + enemy_radius[i] * cos(theta[i]));
         auto_enemy[i].setY(50 + enemy_radius[i] * sin(theta[i]));
     }
-    if (enemy_accumulator >= enemy_cooltime && auto_enemy.size() < 10 && enemy_total < 1) {//生成一个敌机
+    if (enemy_accumulator >= enemy_cooltime && auto_enemy.size() < 10 && enemy_total < 50) {//生成一个敌机
         enemy_total++;
         std::uniform_real_distribution<double> radius_dist(0.95, 1.05);
         enemy_radius.push_back(radius * radius_dist(rng));
@@ -788,9 +789,9 @@ void MainWindow::onTimerTick()
     }
 
     //一面BOSS战初始化
-    if (boss_1_init == 0 && score >= 1 && enemy_bullet.size() == 0 && m_bullets_1.size() == 0 && m_bullets_2.size() == 0 && m_bullets_3.size() == 0) {
+    if (boss_1_init == 0 && score >= 50 && enemy_bullet.size() == 0 && m_bullets_1.size() == 0 && m_bullets_2.size() == 0 && m_bullets_3.size() == 0) {
         boss_1_init = 1;
-        self_blood = 5;//奖励血量重置
+        self_blood = 10;//奖励血量重置
         vol_status = true;//开始减弱过程
         input_lock = true;//玩家交换控制权
     }
@@ -939,6 +940,22 @@ void MainWindow::onTimerTick()
             m_bullets_1.erase(m_bullets_1.begin() + bullet_index_1[i]);
         }
         bullet_index_1 = {};
+        //以下是自机和敌机弹幕碰撞逻辑
+        for (int i = boss_1_bullets.size() - 1; i >= 0; --i) {
+            int square_distance = (boss_1_bullets[i].x() - m_pos.x()) * (boss_1_bullets[i].x() - m_pos.x()) + (boss_1_bullets[i].y() - m_pos.y()) * (boss_1_bullets[i].y() - m_pos.y());
+            if (square_distance >= 0 && square_distance <= 25) {
+                if (self_blood >= 0) {
+                    self_blood--;
+                    boss_1_bullets.removeAt(i);
+                    boss_1_angle.erase(boss_1_angle.begin() + i);
+                    boss_1_bullets_speed.erase(boss_1_bullets_speed.begin() + i);
+                }
+                if (self_blood <= 0) {
+                    game_over = true;
+                    break;
+                }
+            }
+        }
         if (boss_1_end == true) {
             boss_1_status = 2;
         }
@@ -953,6 +970,21 @@ void MainWindow::onTimerTick()
                 boss_1_bullets.removeAt(i);
                 boss_1_angle.erase(boss_1_angle.begin() + i);
                 boss_1_bullets_speed.erase(boss_1_bullets_speed.begin() + i);
+            }
+        }
+        for (int i = boss_1_bullets.size() - 1; i >= 0; --i) {
+            int square_distance = (boss_1_bullets[i].x() - m_pos.x()) * (boss_1_bullets[i].x() - m_pos.x()) + (boss_1_bullets[i].y() - m_pos.y()) * (boss_1_bullets[i].y() - m_pos.y());
+            if (square_distance >= 0 && square_distance <= 25) {
+                if (self_blood >= 0) {
+                    self_blood -= 1;
+                    boss_1_bullets.removeAt(i);
+                    boss_1_angle.erase(boss_1_angle.begin() + i);
+                    boss_1_bullets_speed.erase(boss_1_bullets_speed.begin() + i);
+                }
+                if (self_blood <= 0) {
+                    game_over = true;
+                    break;
+                }
             }
         }
         if (boss_1.y() >= -100) {

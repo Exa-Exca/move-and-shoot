@@ -41,7 +41,7 @@ private:
     int m_speed;//速度
     QTimer* m_timer;//闹钟
     int score;
-    int self_blood=5;//自己血量
+    int self_blood=10;//自己血量
     QElapsedTimer m_elapsed;//一个高精度的秒表
     QMediaPlayer* m_player;
     QMediaPlayer* m_player_boss_1;
