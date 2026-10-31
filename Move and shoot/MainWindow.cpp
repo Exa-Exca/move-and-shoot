@@ -94,6 +94,7 @@ void MainWindow::paintEvent(QPaintEvent* event)
     QRect totalRect(10, 10, 590, 790);
     painter.setClipRect(totalRect);//开启裁剪
     painter.drawPixmap(qRound(boss_1.x() - 20), qRound(boss_1.y() - 20), boss_1_Img);
+
     QPen pen_arm;
     pen_arm.setColor(Qt::red);
     pen_arm.setWidth(4);
@@ -193,23 +194,25 @@ void MainWindow::paintEvent(QPaintEvent* event)
     painter.drawLine(995, 50, 995, 300);
     painter.drawLine(605, 300, 995, 300);
 
-    QRect textRect(605,50,385,200);//确定盒子模型的位置，左上角坐标-宽高
-    QString htmlCode = R"(
-        <div style='color:#FFFFFF;font-family:KaiTi;font-size:70px; text-align: center;' ><b>東方妖々夢</b></div>
-        <div style='color:#FFFFFF;font-family:KaiTi;font-size:25px;text-align:left;'>
-            <b>技能一冷却剩余：%1 s</b>
-            <br>
-            <b>技能二冷却剩余：%2 s</b>
-            <br>
-            <b>技能三冷却剩余：%3 s</b>
-            <br>
-            <b>得分：%4 </b>
-            <br>
-            <b>剩余血量：%5 </b>
-        </div>
-            )";
-    htmlCode = htmlCode.arg(ceil(1.0 * rest_cool_1 / 100) / 10).arg(ceil(1.0 * rest_cool_2 / 100) / 10).arg(ceil(1.0 * rest_cool_3 / 100) / 10).arg(score).arg(self_blood);
-    
+    QRect textRect(605,50,385,250);//确定盒子模型的位置，左上角坐标-宽高
+    QString s_cd1 = QString::number(ceil(1.0 * rest_cool_1 / 100) / 10);
+    QString s_cd2 = QString::number(ceil(1.0 * rest_cool_2 / 100) / 10);
+    QString s_cd3 = QString::number(ceil(1.0 * rest_cool_3 / 100) / 10);
+    QString s_score = QString::number(score);
+    QString s_blood = QString::number(self_blood);
+    QString htmlCode = "<div style='color:#FFFFFF;font-family:KaiTi;font-size:70px; text-align: center;'><b>東方妖々夢</b></div>"
+        "<div style='color:#FFFFFF;font-family:KaiTi;font-size:25px;text-align:left;'>"
+        "<b>技能一冷却剩余：" + s_cd1 + " s</b><br>"
+        "<b>技能二冷却剩余：" + s_cd2 + " s</b><br>"
+        "<b>技能三冷却剩余：" + s_cd3 + " s</b><br>"
+        "<b>得分：" + s_score + "</b><br>"
+        "<b>剩余血量：" + s_blood + "</b><br>";
+    if (boss_1_init==1&&boss_1_end==false) {
+        htmlCode+= "<b>一面boss剩余血量：""</b><br>";
+        htmlCode+= "<b>"+QString::number(boss_1_blood) + "</b><br>";
+    }
+    htmlCode += "</div>";
+    qDebug() << "状态检查 -> init:" << boss_1_init << " end:" << boss_1_end;
     QTextDocument doc;
     doc.setHtml(htmlCode);//召唤QTextDocument解析器
 
@@ -339,6 +342,8 @@ void MainWindow::mousePressEvent(QMouseEvent* event)
 
 void MainWindow::resetgame() {
     game_over = false;
+    speedstatus = 1;
+    m_speed = 300;
     self_blood = 5;
     score = 0;
     m_alltime_1 = 0;
@@ -804,6 +809,8 @@ void MainWindow::onTimerTick()
         }
         else {//boss已经就位
             for (int i = 0; i < Wheel.size(); i++) {
+                delta_vx = 0;
+                delta_vy = 0;
                 if (Wheel[i].y() <= 790 - 145) {
                     Wheel[i].setY(Wheel[i].y() + dt * boss_1_speed);
                 }
@@ -847,7 +854,7 @@ void MainWindow::onTimerTick()
         if (boss_1_accumulation >= boss_1_cooldown) {
             boss_1_accumulation -= boss_1_cooldown;
             std::uniform_real_distribution<double> boss_1_angle_list((-M_PI / 12), (M_PI / 12));
-            std::uniform_real_distribution<double> boss_1_speed_list(200, 300);//速度在200~300之间的慢速弹幕
+            std::uniform_real_distribution<double> boss_1_speed_list(150, 200);//速度在200~300之间的慢速弹幕
             boss_1_bullets.append(QPointF(boss_1.x(), boss_1.y()));
             boss_1_angle.push_back(boss_1_angle_list(rng));
             boss_1_bullets_speed.push_back(boss_1_speed_list(rng));
@@ -857,6 +864,105 @@ void MainWindow::onTimerTick()
                 boss_1_bullets.removeAt(i);
                 boss_1_angle.erase(boss_1_angle.begin() + i);
                 boss_1_bullets_speed.erase(boss_1_bullets_speed.begin() + i);
+            }
+        }
+        //以下是自机弹幕和一面boss碰撞逻辑
+        for (int i = 0; i < m_bullets.size(); i++) {
+            int square_distance = (m_bullets[i].x() - boss_1.x()) * (m_bullets[i].x() - boss_1.x()) + (m_bullets[i].y() - boss_1.y()) * (m_bullets[i].y() - boss_1.y());
+            if (square_distance >= 0 && square_distance <= 100) {//开始判定
+                if (boss_1_blood > 0) {
+                    boss_1_blood -= 10;
+                }
+                bullet_index.push_back(i);
+                if (boss_1_blood <= 0) {
+                    boss_1_end = true;//boss战结束
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < m_bullets_1.size(); i++) {
+            int square_distance = (m_bullets_1[i].x() - boss_1.x()) * (m_bullets_1[i].x() - boss_1.x()) + (m_bullets_1[i].y() - boss_1.y()) * (m_bullets_1[i].y() - boss_1.y());
+            if (square_distance >= 0 && square_distance <= 100) {//开始判定
+                if (boss_1_blood > 0) {
+                    boss_1_blood -= 10;
+                }
+                bullet_index_1.push_back(i);
+                if (boss_1_blood <= 0) {
+                    boss_1_end = true;//boss战结束
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < m_bullets_2.size(); i++) {
+            for (int j = 0; j < m_bullets_2[i].size(); j++) {
+                if (list[i][j] != -1) {
+                    int square_distance = (m_bullets_2[i][j].x() - boss_1.x()) * (m_bullets_2[i][j].x() - boss_1.x()) + (m_bullets_2[i][j].y() - boss_1.y()) * (m_bullets_2[i][j].y() - boss_1.y());
+                    if (square_distance >= 0 && square_distance <= 100) {//开始判定
+                        if (boss_1_blood > 0) {
+                            boss_1_blood -= 10;
+                        }
+                        list[i][j] = -1;//建立墓碑
+                        if (boss_1_blood <= 0) {
+                            boss_1_end = true;//boss战结束
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < m_bullets_3.size(); i++) {
+            for (int j = 0; j < m_bullets_3[i].size(); j++) {
+                if (list_3[i][j] != -1) {
+                    int square_distance = (m_bullets_3[i][j].x() - boss_1.x()) * (m_bullets_3[i][j].x() - boss_1.x()) + (m_bullets_3[i][j].y() - boss_1.y()) * (m_bullets_3[i][j].y() - boss_1.y());
+                    if (square_distance >= 0 && square_distance <= 100) {//开始判定
+                        if (boss_1_blood > 0) {
+                            boss_1_blood -= 10;
+                        }
+                        list_3[i][j] = -1;//建立墓碑
+                        if (boss_1_blood <= 0) {
+                            boss_1_end = true;//boss战结束
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        std::sort(bullet_index.begin(), bullet_index.end());
+        bullet_index.erase(std::unique(bullet_index.begin(), bullet_index.end()), bullet_index.end());
+        std::sort(bullet_index_1.begin(), bullet_index_1.end());
+        bullet_index_1.erase(std::unique(bullet_index_1.begin(), bullet_index_1.end()), bullet_index_1.end());
+        for (int i = bullet_index.size() - 1; i >= 0; --i) {
+            m_bullets.erase(m_bullets.begin() + bullet_index[i]);
+        }
+        bullet_index = {};
+        for (int i = bullet_index_1.size() - 1; i >= 0; --i) {
+            m_bullets_1.erase(m_bullets_1.begin() + bullet_index_1[i]);
+        }
+        bullet_index_1 = {};
+        if (boss_1_end == true) {
+            boss_1_status = 2;
+        }
+    }
+    if (boss_1_status == 2) {//击败一面boss
+        for (int i = 0; i < boss_1_bullets.size(); i++) {//剩下的子弹也还在运动，也还会判定碰撞
+            boss_1_bullets[i].setX(boss_1_bullets[i].x() + boss_1_bullets_speed[i] * sin(boss_1_angle[i]) * dt);
+            boss_1_bullets[i].setY(boss_1_bullets[i].y() + boss_1_bullets_speed[i] * cos(boss_1_angle[i]) * dt);
+        }
+        for (int i = boss_1_bullets.size() - 1; i >= 0; --i) {
+            if (boss_1_bullets[i].x() < 10 || boss_1_bullets[i].x() > 590 || boss_1_bullets[i].y() > 790) {
+                boss_1_bullets.removeAt(i);
+                boss_1_angle.erase(boss_1_angle.begin() + i);
+                boss_1_bullets_speed.erase(boss_1_bullets_speed.begin() + i);
+            }
+        }
+        if (boss_1.y() >= -100) {
+            boss_1.setY(boss_1.y() - dt * boss_1_speed);
+        }
+        else {//boss已经就位
+            for (int i = 0; i < Wheel.size(); i++) {
+                if (Wheel[i].y() >= -200) {
+                    Wheel[i].setY(Wheel[i].y() - dt * boss_1_speed);
+                }
             }
         }
     }

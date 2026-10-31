@@ -117,7 +117,7 @@ private:
     //设计的每一组弹幕一共5发，只和当前敌机位置和自机位置有关，同时发射，速度从720-800分布
 
     QPointF boss_1;
-    int boss_1_blood = 100;
+    int boss_1_blood = 10000;
     QPixmap boss_1_Img;
     int boss_1_speed = 150;
     QList<QPointF> Wheel;
@@ -130,11 +130,12 @@ private:
     int boss_1_status = 0;//表示一面boss战是否正式开始
     bool vol_status = false;//上一首bgm渐弱开启
     double vol = 0.5;//上一首bgm音量
+    bool boss_1_end = false;//表示一面boss战完结
 
     QList<QPointF> boss_1_bullets;//在一个张角内随机分布的一个弹幕，设这个张角是（-15°~+15°）
     std::vector<double>boss_1_angle;//随机生成角度的列表
     std::vector<double>boss_1_bullets_speed;//随机生成的速度分布
-    int boss_1_cooldown = 50;//敌机开火冷却
+    int boss_1_cooldown = 100;//敌机开火冷却
     double boss_1_accumulation;//敌机开火计时器
 private slots://这是独有的语法，槽函数，专门接收信号的窗口
     void onTimerTick(); //定时器每次触发的函数，槽函数
