@@ -68,12 +68,18 @@
     <Image Include="boss_1.png">
       <Filter>Source Files</Filter>
     </Image>
+    <Image Include="auto_enemy_2.png">
+      <Filter>Source Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Media Include="music.mp3">
       <Filter>Source Files</Filter>
     </Media>
     <Media Include="boss_1_music.mp3">
+      <Filter>Source Files</Filter>
+    </Media>
+    <Media Include="music_2.mp3">
       <Filter>Source Files</Filter>
     </Media>
   </ItemGroup>

@@ -45,8 +45,10 @@ private:
     QElapsedTimer m_elapsed;//一个高精度的秒表
     QMediaPlayer* m_player;
     QMediaPlayer* m_player_boss_1;
+    QMediaPlayer* m_player_2;
     QAudioOutput* m_audioOutput;
     QAudioOutput* m_audioOutput_boss_1;
+    QAudioOutput* m_audioOutput_2;
     bool input_lock = false;
 
     QSet<int> m_pressedKeys;//记录当前所按下的所有按键
@@ -137,6 +139,12 @@ private:
     std::vector<double>boss_1_bullets_speed;//随机生成的速度分布
     int boss_1_cooldown = 100;//敌机开火冷却
     double boss_1_accumulation;//敌机开火计时器
+    bool vol_boss_1_status;
+    double vol_boss_1 = 0.5;
+
+    QList<QPointF>auto_enemy_2;
+    QPixmap auto_enemy_2_Img;
+
 private slots://这是独有的语法，槽函数，专门接收信号的窗口
     void onTimerTick(); //定时器每次触发的函数，槽函数
 };

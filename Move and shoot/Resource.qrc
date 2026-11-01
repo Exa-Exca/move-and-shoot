@@ -29,4 +29,10 @@
     <qresource prefix="/new/prefix9">
         <file>boss_1_music.mp3</file>
     </qresource>
+    <qresource prefix="/new/prefix10">
+        <file>music_2.mp3</file>
+    </qresource>
+    <qresource prefix="/new/prefix11">
+        <file>auto_enemy_2.png</file>
+    </qresource>
 </RCC>

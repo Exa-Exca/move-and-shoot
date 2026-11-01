@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget* parent)
     m_audioOutput_boss_1 = new QAudioOutput(this);
     m_audioOutput_boss_1->setVolume(0.5); // 音量 50%
 
+    m_audioOutput_2 = new QAudioOutput(this);
+    m_audioOutput_2->setVolume(0.5);
+
     m_player = new QMediaPlayer(this);
     m_player->setAudioOutput(m_audioOutput);
     m_player->setSource(QUrl("qrc:/new/prefix1/music.mp3"));
@@ -41,6 +44,11 @@ MainWindow::MainWindow(QWidget* parent)
     m_player_boss_1->setSource(QUrl("qrc:/new/prefix9/boss_1_music.mp3"));
     m_player_boss_1->setLoops(QMediaPlayer::Infinite);
     //初始不播放
+
+    m_player_2 = new QMediaPlayer(this);
+    m_player_2->setAudioOutput(m_audioOutput_2);
+    m_player_2->setSource(QUrl("qrc:/new/prefix10/music_2.mp3"));
+    m_player_2->setLoops(QMediaPlayer::Infinite);
 
     m_bullets_2.reserve(100);
     m_bullets_3.reserve(100);
@@ -70,6 +78,9 @@ MainWindow::MainWindow(QWidget* parent)
     boss_1_Img = rawBoss_1.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     boss_1 = QPointF(300, -100);
     Wheel = { QPointF(145, -200),QPointF(445, -200) };
+
+    QPixmap rawEnemy_2(":/new/prefix11/auto_enemy_2.png");
+    auto_enemy_2_Img = rawEnemy_2.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 
@@ -367,6 +378,8 @@ void MainWindow::resetgame() {
     vol = 0.5;
     boss_1_accumulation = 0;
     boss_1_blood = 10000;
+    vol_boss_1_status = false;
+    vol_boss_1 = 0.5;
     //所有实体数组清楚
     auto_enemy.clear(); blood.clear(); theta.clear(); random_position.clear(); enemy_fire_cooldown.clear();
     angular_speed.clear(); enemy_radius.clear();
@@ -796,8 +809,13 @@ void MainWindow::onTimerTick()
         input_lock = true;//玩家交换控制权
     }
     if (boss_1_status == 0 && boss_1_init == 1 && enemy_bullet.size() == 0 && m_bullets_1.size() == 0 && m_bullets_2.size() == 0 && m_bullets_3.size() == 0) {
-        vol -= 0.125 * dt;
-        m_audioOutput->setVolume(vol);
+        if (vol >= 0) {
+            vol -= 0.125 * dt;
+            m_audioOutput->setVolume(vol);
+        }
+        else {
+            m_player->pause();
+        }
         if (delta_vx <= 0 && delta_vy <= 0) {
             delta_vx = (300 - m_pos.x()) * 150 / 200.0;
             delta_vy = (750 - m_pos.y()) * 150 / 200.0;
@@ -958,9 +976,17 @@ void MainWindow::onTimerTick()
         }
         if (boss_1_end == true) {
             boss_1_status = 2;
+            vol_boss_1_status = true;
         }
     }
     if (boss_1_status == 2) {//击败一面boss
+        if (vol_boss_1 >= 0) {
+            vol_boss_1 -= dt * 0.125;
+            m_audioOutput_boss_1->setVolume(vol_boss_1);
+        }
+        else {
+            m_player_boss_1->pause();
+        }
         for (int i = 0; i < boss_1_bullets.size(); i++) {//剩下的子弹也还在运动，也还会判定碰撞
             boss_1_bullets[i].setX(boss_1_bullets[i].x() + boss_1_bullets_speed[i] * sin(boss_1_angle[i]) * dt);
             boss_1_bullets[i].setY(boss_1_bullets[i].y() + boss_1_bullets_speed[i] * cos(boss_1_angle[i]) * dt);
@@ -997,6 +1023,11 @@ void MainWindow::onTimerTick()
                 }
             }
         }
+        boss_1_status = 3;//1-3-true，一面boss战完全结束
+    }
+    //二面道中
+    if (boss_1_status == 3) {
+        m_player_2->play();
     }
 
     //边界限制：

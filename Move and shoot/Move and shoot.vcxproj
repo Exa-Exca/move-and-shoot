@@ -107,6 +107,7 @@
   <ItemGroup>
     <Image Include="..\..\..\..\..\Pictures\Screenshots\player.png" />
     <Image Include="auto_enemy.png" />
+    <Image Include="auto_enemy_2.png" />
     <Image Include="background.png" />
     <Image Include="black_area.png" />
     <Image Include="boss_1.png" />
@@ -116,6 +117,7 @@
   <ItemGroup>
     <Media Include="boss_1_music.mp3" />
     <Media Include="music.mp3" />
+    <Media Include="music_2.mp3" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
