@@ -144,6 +144,16 @@ private:
 
     QList<QPointF>auto_enemy_2;
     QPixmap auto_enemy_2_Img;
+    std::vector<int>blood_2;
+    std::vector<double>line_speed_2;
+    //大致沿y=sqrt(x)运动,碰到边界就回归，左右两支互不干扰
+    //设定边界是x从0到600取值，y从10*sqrt(0+25)到10*sqrt(600+25)取值
+    std::vector<int>direction_2;//运动方向
+    std::vector<int>sign;
+    int enemy_cooltime_2 = 1000;//每一秒生成一个敌机
+    double enemy_accumulator_2 = 0.0;//最开始积累值为0
+    int enemy_total_2 = 0;
+    int reverse_2 = 1;
 
 private slots://这是独有的语法，槽函数，专门接收信号的窗口
     void onTimerTick(); //定时器每次触发的函数，槽函数

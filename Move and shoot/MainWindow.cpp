@@ -380,6 +380,9 @@ void MainWindow::resetgame() {
     boss_1_blood = 10000;
     vol_boss_1_status = false;
     vol_boss_1 = 0.5;
+    enemy_accumulator_2 = 0;
+    enemy_total_2 = 0;
+    reverse_2 = 1;
     //所有实体数组清楚
     auto_enemy.clear(); blood.clear(); theta.clear(); random_position.clear(); enemy_fire_cooldown.clear();
     angular_speed.clear(); enemy_radius.clear();
@@ -389,6 +392,7 @@ void MainWindow::resetgame() {
     m_bullets_3.clear(); list_3.clear();
     enemy_bullet.clear(); direction.clear(); list_e.clear();
     boss_1_bullets.clear(); boss_1_angle.clear(); boss_1_bullets_speed.clear();
+    auto_enemy_2.clear(); blood_2.clear(); line_speed_2.clear(); direction_2.clear(); sign.clear();
 
     m_pos = QPointF(300, 750);
     boss_1 = QPointF(300, -100);
@@ -1028,6 +1032,59 @@ void MainWindow::onTimerTick()
     //二面道中
     if (boss_1_status == 3) {
         m_player_2->play();
+        enemy_accumulator_2 += dt * 1000;
+        for (int i = 0; i < auto_enemy_2.size(); i++) {
+            double delta_s_2 = dt * line_speed_2[i];
+            if (sign[i] == 1) {//正轨道
+                double delta_x_2 = delta_s_2 / (std::sqrt(1 + (25 / (625 - auto_enemy_2[i].x()))));
+                if (auto_enemy_2[i].x() + delta_x_2 > 600 || auto_enemy_2[i].x() + delta_x_2 < 0) {//超出边界了，调头
+                    if (auto_enemy_2[i].x() + delta_x_2 > 600) {
+                        auto_enemy_2[i].setX(1200 - auto_enemy_2[i].x() - delta_x_2);
+                    }
+                    else {
+                        auto_enemy_2[i].setX(-auto_enemy_2[i].x() - delta_x_2);
+                    }
+                    direction_2[i] = -direction_2[i];
+                }
+                else {
+                    auto_enemy_2[i].setX(auto_enemy_2[i].x() + delta_x_2);
+                }
+                auto_enemy_2[i].setY(300 - 10 * std::sqrt(625 - auto_enemy_2[i].x()));
+            }
+            else {
+                double delta_x_2 = delta_s_2 / (std::sqrt(1 + (25 / (25 + auto_enemy_2[i].x()))));
+                if (auto_enemy_2[i].x() + delta_x_2 > 600 || auto_enemy_2[i].x() + delta_x_2 < 0) {//超出边界了，调头
+                    if (auto_enemy_2[i].x() + delta_x_2 > 600) {
+                        auto_enemy_2[i].setX(1200 - auto_enemy_2[i].x() - delta_x_2);
+                    }
+                    else {
+                        auto_enemy_2[i].setX(-auto_enemy_2[i].x() - delta_x_2);
+                    }
+                    direction_2[i] = -direction_2[i];
+                }
+                else {
+                    auto_enemy_2[i].setX(auto_enemy_2[i].x() + delta_x_2);
+                }
+                auto_enemy_2[i].setY(300 - 10 * std::sqrt(25 + auto_enemy_2[i].x()));
+            }
+        }
+        if (enemy_accumulator_2 >= enemy_cooltime_2) {
+            enemy_total_2++;
+            enemy_accumulator_2 -= enemy_cooltime_2;
+            std::uniform_real_distribution<double>speed_list_2(150, 250);
+            line_speed_2.push_back(speed_list_2(rng));
+            if (reverse_2 == -1) {//负轨道,y=300-10sqrt(x+25),(600,50)->(0,250)
+                auto_enemy_2.append(QPointF(600, 50));
+                direction_2.push_back(reverse_2);
+                sign.push_back(-1);
+            }
+            else {//正轨道,y=300-10sqrt(625-x),(0,50)->(600,250)
+                auto_enemy_2.append(QPointF(0, 50));
+                direction_2.push_back(reverse_2);
+                sign.push_back(1);
+            }
+            reverse_2 = -reverse_2;//反转态
+        }
     }
 
     //边界限制：
