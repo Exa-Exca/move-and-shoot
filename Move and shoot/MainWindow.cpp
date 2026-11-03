@@ -81,6 +81,13 @@ MainWindow::MainWindow(QWidget* parent)
 
     QPixmap rawEnemy_2(":/new/prefix11/auto_enemy_2.png");
     auto_enemy_2_Img = rawEnemy_2.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    QPixmap rawEnemy_bullet_2(":/new/prefix12/enemy_bullet_2.png");
+    enemy_bullet_2_Img = rawEnemy_bullet_2.scaled(16, 16, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    Gun_turret = QPointF(300, -100);
+    QPixmap rawGun_turret(":/new/prefix13/Gun_turret.png");
+    Gun_turret_Img = rawGun_turret.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 
@@ -190,6 +197,21 @@ void MainWindow::paintEvent(QPaintEvent* event)
         painter.setClipRect(totalRect);//开启裁剪
         painter.drawPixmap(qRound(enemy_2.x() - 20), qRound(enemy_2.y() - 20), auto_enemy_2_Img);
         painter.setClipping(false);//关闭裁剪
+    }
+
+    for (int i = 0; i < enemy_bullet_2.size(); i++) {
+        for (int j = 0; j < enemy_bullet_2[i].size(); j++) {
+            const QPointF bullet_e = enemy_bullet_2[i][j];
+            painter.drawPixmap(qRound(bullet_e.x() - 8), qRound(bullet_e.y() - 8), enemy_bullet_2_Img);
+        }
+    }
+
+    painter.setClipRect(totalRect);//开启裁剪
+    painter.drawPixmap(qRound(Gun_turret.x() - 20), qRound(Gun_turret.y() - 20), Gun_turret_Img);
+    painter.setClipping(false);//关闭裁剪
+
+    for (const QPointF& bullet : Gun_bullet_2) {
+        painter.drawPixmap(qRound(bullet.x() - 7), qRound(bullet.y() - 7), enemy_bullet_Img);
     }
 
     QPen pen;//建立一个画笔
@@ -390,6 +412,7 @@ void MainWindow::resetgame() {
     enemy_accumulator_2 = 0;
     enemy_total_2 = 0;
     reverse_2 = 1;
+    Gun_bullet_accumulator = 0;
     //所有实体数组清楚
     auto_enemy.clear(); blood.clear(); theta.clear(); random_position.clear(); enemy_fire_cooldown.clear();
     angular_speed.clear(); enemy_radius.clear();
@@ -400,6 +423,8 @@ void MainWindow::resetgame() {
     enemy_bullet.clear(); direction.clear(); list_e.clear();
     boss_1_bullets.clear(); boss_1_angle.clear(); boss_1_bullets_speed.clear();
     auto_enemy_2.clear(); blood_2.clear(); line_speed_2.clear(); direction_2.clear(); sign.clear();
+    enemy_bullet_2.clear(); direction_bullet_2.clear(); random_position_2.clear(); cooldown_status_2.clear();
+    Gun_bullet_2.clear(); direction_gun_2.clear();
 
     m_pos = QPointF(300, 750);
     boss_1 = QPointF(300, -100);
@@ -1042,6 +1067,12 @@ void MainWindow::onTimerTick()
     //二面道中
     if (boss_1_status == 3) {
         m_player_2->play();
+        if (Gun_turret.y() < 100) {
+            Gun_turret.setY(Gun_turret.y() + dt * 150);
+        }
+        else if (Gun_turret.y() > 100) {
+            Gun_turret.setY(100);
+        }
         enemy_accumulator_2 += dt * 1000;
         for (int i = 0; i < auto_enemy_2.size(); i++) {
             double delta_s_2 = dt * line_speed_2[i] * direction_2[i];
@@ -1082,7 +1113,12 @@ void MainWindow::onTimerTick()
             enemy_total_2++;
             enemy_accumulator_2 -= enemy_cooltime_2;
             std::uniform_real_distribution<double>speed_list_2(150, 250);
+            std::uniform_real_distribution<double>position_list_2(50, 550);
             line_speed_2.push_back(speed_list_2(rng));
+            random_position_2.push_back(position_list_2(rng));
+            enemy_bullet_2.append(QVector<QPointF>{});
+            direction_bullet_2.push_back({});
+            cooldown_status_2.push_back(true);
             if (reverse_2 == 1) {//正轨道,y=10sqrt(x+25),(0,50)->(600,250)
                 auto_enemy_2.append(QPointF(0, 50));
                 direction_2.push_back(reverse_2);
@@ -1094,6 +1130,82 @@ void MainWindow::onTimerTick()
                 sign.push_back(-1);
             }
             reverse_2 = -reverse_2;//反转态
+        }
+        //敌机子弹逻辑
+        for (int i = 0; i < enemy_bullet_2.size(); i++) {
+            for (int j = 0; j < enemy_bullet_2[i].size(); j++) {
+                double delta_x;
+                if (direction_bullet_2[i][j] > 0) {
+                    delta_x = enemy_bullet_2_speed * dt * 1 / std::sqrt(1 + direction_bullet_2[i][j] * direction_bullet_2[i][j]);
+                }
+                else {
+                    delta_x =- enemy_bullet_2_speed * dt * 1 / std::sqrt(1 + direction_bullet_2[i][j] * direction_bullet_2[i][j]);
+                }
+                double delta_y = enemy_bullet_2_speed * dt * std::abs(direction_bullet_2[i][j]) / std::sqrt(1 + direction_bullet_2[i][j] * direction_bullet_2[i][j]);
+                if (enemy_bullet_2[i][j].x() + delta_x > 590) {
+                    enemy_bullet_2[i][j].setX(1180 - (enemy_bullet_2[i][j].x() + delta_x));
+                    direction_bullet_2[i][j] = -direction_bullet_2[i][j];
+                }
+                else if (enemy_bullet_2[i][j].x() + delta_x < 100) {
+                    enemy_bullet_2[i][j].setX(20 - (enemy_bullet_2[i][j].x() + delta_x));
+                    direction_bullet_2[i][j] = -direction_bullet_2[i][j];
+                }
+                else {
+                    enemy_bullet_2[i][j].setX(enemy_bullet_2[i][j].x() + delta_x);
+                }
+                enemy_bullet_2[i][j].setY(enemy_bullet_2[i][j].y() + delta_y);
+            }
+        }
+        for (int i = 0; i < auto_enemy_2.size(); i++) {//对所有的敌机
+            if (sign[i] == 1 && direction_2[i] == 1) {//正轨道,y=10sqrt(x+25),(0,50)->(600,250),下降沿触发
+                if (std::fmod(std::abs(auto_enemy_2[i].x() - random_position_2[i]),200) <= 5&&cooldown_status_2[i]==true) {
+                    cooldown_status_2[i] = false;
+                    //正轨道上,导函数dy/dx=5/sqrt(x+25)
+                    enemy_bullet_2[i].push_back(QPointF(auto_enemy_2[i].x(), auto_enemy_2[i].y()));
+                    direction_bullet_2[i].push_back(5 / std::sqrt(25 + auto_enemy_2[i].x()));
+                }
+                else if (std::fmod(std::abs(auto_enemy_2[i].x() - random_position_2[i]) ,200)>= 20 && cooldown_status_2[i] == false) {
+                    cooldown_status_2[i] = true;
+                }
+            }
+            else if (sign[i] == -1 && direction_2[i] == -1) {//负轨道,y=10sqrt(625-x),(600,50)->(0,250),下降沿触发
+                if (std::fmod(std::abs(auto_enemy_2[i].x() - random_position_2[i]),200) <= 5 && cooldown_status_2[i] == true) {
+                    cooldown_status_2[i] = false;
+                    enemy_bullet_2[i].push_back(QPointF(auto_enemy_2[i].x(), auto_enemy_2[i].y()));
+                    direction_bullet_2[i].push_back(-5 / std::sqrt(625 - auto_enemy_2[i].x()));
+                }
+                else if (std::fmod(std::abs(auto_enemy_2[i].x() - random_position_2[i]),200 )>= 20 && cooldown_status_2[i] == false) {
+                    cooldown_status_2[i] = true;
+                }
+            }
+        }
+        for (int i = 0; i < enemy_bullet_2.size(); i++) {
+            for (int j = enemy_bullet_2[i].size() - 1; j >= 0; --j) {
+                if (enemy_bullet_2[i][j].y() > 790) {
+                    enemy_bullet_2[i].removeAt(j);
+                    direction_bullet_2[i].erase(direction_bullet_2[i].begin() + j);
+                }
+            }
+        }
+        if (Gun_turret.y() == 100) {
+            Gun_bullet_accumulator += dt * 1000;
+        }
+        for (int i = 0; i < Gun_bullet_2.size(); i++) {
+            Gun_bullet_2[i].setX(Gun_bullet_2[i].x() + Gun_bullet_2_speed * dt * direction_gun_2[i][0]);
+            Gun_bullet_2[i].setY(Gun_bullet_2[i].y() + Gun_bullet_2_speed * dt * direction_gun_2[i][1]);
+        }
+        if (Gun_bullet_accumulator >= Gun_bullet_cooldown_2) {
+            Gun_bullet_accumulator -= Gun_bullet_cooldown_2;
+            double delta_x = m_pos.x() - Gun_turret.x();
+            double delta_y = m_pos.y() - Gun_turret.y();
+            Gun_bullet_2.append(QPointF(300, 100));
+            direction_gun_2.push_back({ delta_x / std::sqrt(delta_x * delta_x + delta_y * delta_y),delta_y / std::sqrt(delta_x * delta_x + delta_y * delta_y) });
+        }
+        for (int i = Gun_bullet_2.size() - 1; i >= 0; --i) {
+            if (Gun_bullet_2[i].x() < 10 || Gun_bullet_2[i].x() > 590 || Gun_bullet_2[i].y() < 10 || Gun_bullet_2[i].y() > 790) {
+                Gun_bullet_2.removeAt(i);
+                direction_gun_2.erase(direction_gun_2.begin() + i);
+            }
         }
     }
 

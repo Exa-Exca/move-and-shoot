@@ -155,6 +155,19 @@ private:
     int enemy_total_2 = 0;
     int reverse_2 = 1;
 
+    QList<QVector<QPointF>>enemy_bullet_2;
+    QList<QPointF>Gun_bullet_2;
+    QPixmap enemy_bullet_2_Img;
+    QPointF Gun_turret;
+    QPixmap Gun_turret_Img;
+    int enemy_bullet_2_speed = 400;
+    int Gun_bullet_2_speed = 800;
+    std::vector<std::vector<double>>direction_gun_2;
+    int Gun_bullet_cooldown_2 = 1000;
+    double Gun_bullet_accumulator = 0.0;
+    std::vector<double>random_position_2;//记录范围内的发射位置
+    std::vector<std::vector<double>>direction_bullet_2;//子弹运行方向
+    std::vector<bool> cooldown_status_2;
 private slots://这是独有的语法，槽函数，专门接收信号的窗口
     void onTimerTick(); //定时器每次触发的函数，槽函数
 };

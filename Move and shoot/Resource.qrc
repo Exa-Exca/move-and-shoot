@@ -35,4 +35,10 @@
     <qresource prefix="/new/prefix11">
         <file>auto_enemy_2.png</file>
     </qresource>
+    <qresource prefix="/new/prefix12">
+        <file>enemy_bullet_2.png</file>
+    </qresource>
+    <qresource prefix="/new/prefix13">
+        <file>Gun_turret.png</file>
+    </qresource>
 </RCC>
