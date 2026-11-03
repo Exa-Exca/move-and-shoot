@@ -119,7 +119,7 @@ private:
     //设计的每一组弹幕一共5发，只和当前敌机位置和自机位置有关，同时发射，速度从720-800分布
 
     QPointF boss_1;
-    int boss_1_blood = 10000;
+    int boss_1_blood = 1000;
     QPixmap boss_1_Img;
     int boss_1_speed = 150;
     QList<QPointF> Wheel;

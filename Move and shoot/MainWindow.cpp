@@ -185,6 +185,13 @@ void MainWindow::paintEvent(QPaintEvent* event)
         painter.drawPixmap(qRound(bullet.x() - 7), qRound(bullet.y() - 7), enemy_bullet_Img);
     }
 
+    for (const QPointF& enemy_2 : auto_enemy_2) {
+        QRect totalRect(10, 10, 580, 780);
+        painter.setClipRect(totalRect);//开启裁剪
+        painter.drawPixmap(qRound(enemy_2.x() - 20), qRound(enemy_2.y() - 20), auto_enemy_2_Img);
+        painter.setClipping(false);//关闭裁剪
+    }
+
     QPen pen;//建立一个画笔
     pen.setColor(Qt::red);//画笔颜色
     pen.setWidth(4);//线宽度（单位是像素）
@@ -636,7 +643,7 @@ void MainWindow::onTimerTick()
         auto_enemy[i].setX(300 + enemy_radius[i] * cos(theta[i]));
         auto_enemy[i].setY(50 + enemy_radius[i] * sin(theta[i]));
     }
-    if (enemy_accumulator >= enemy_cooltime && auto_enemy.size() < 10 && enemy_total < 50) {//生成一个敌机
+    if (enemy_accumulator >= enemy_cooltime && auto_enemy.size() < 10 && enemy_total < 1) {//生成一个敌机
         enemy_total++;
         std::uniform_real_distribution<double> radius_dist(0.95, 1.05);
         enemy_radius.push_back(radius * radius_dist(rng));
@@ -806,7 +813,7 @@ void MainWindow::onTimerTick()
     }
 
     //一面BOSS战初始化
-    if (boss_1_init == 0 && score >= 50 && enemy_bullet.size() == 0 && m_bullets_1.size() == 0 && m_bullets_2.size() == 0 && m_bullets_3.size() == 0) {
+    if (boss_1_init == 0 && score >= 1 && enemy_bullet.size() == 0 && m_bullets_1.size() == 0 && m_bullets_2.size() == 0 && m_bullets_3.size() == 0) {
         boss_1_init = 1;
         self_blood = 10;//奖励血量重置
         vol_status = true;//开始减弱过程
@@ -1027,15 +1034,18 @@ void MainWindow::onTimerTick()
                 }
             }
         }
-        boss_1_status = 3;//1-3-true，一面boss战完全结束
+        if (Wheel[0].y() <= -200) {
+            boss_1_status = 3;//1-3-true，一面boss战完全结束
+            self_blood = 10;
+        }
     }
     //二面道中
     if (boss_1_status == 3) {
         m_player_2->play();
         enemy_accumulator_2 += dt * 1000;
         for (int i = 0; i < auto_enemy_2.size(); i++) {
-            double delta_s_2 = dt * line_speed_2[i];
-            if (sign[i] == 1) {//正轨道
+            double delta_s_2 = dt * line_speed_2[i] * direction_2[i];
+            if (sign[i] == -1) {//负轨道
                 double delta_x_2 = delta_s_2 / (std::sqrt(1 + (25 / (625 - auto_enemy_2[i].x()))));
                 if (auto_enemy_2[i].x() + delta_x_2 > 600 || auto_enemy_2[i].x() + delta_x_2 < 0) {//超出边界了，调头
                     if (auto_enemy_2[i].x() + delta_x_2 > 600) {
@@ -1049,7 +1059,7 @@ void MainWindow::onTimerTick()
                 else {
                     auto_enemy_2[i].setX(auto_enemy_2[i].x() + delta_x_2);
                 }
-                auto_enemy_2[i].setY(300 - 10 * std::sqrt(625 - auto_enemy_2[i].x()));
+                auto_enemy_2[i].setY(10 * std::sqrt(625 - auto_enemy_2[i].x()));
             }
             else {
                 double delta_x_2 = delta_s_2 / (std::sqrt(1 + (25 / (25 + auto_enemy_2[i].x()))));
@@ -1065,23 +1075,23 @@ void MainWindow::onTimerTick()
                 else {
                     auto_enemy_2[i].setX(auto_enemy_2[i].x() + delta_x_2);
                 }
-                auto_enemy_2[i].setY(300 - 10 * std::sqrt(25 + auto_enemy_2[i].x()));
+                auto_enemy_2[i].setY(10 * std::sqrt(25 + auto_enemy_2[i].x()));
             }
         }
-        if (enemy_accumulator_2 >= enemy_cooltime_2) {
+        if (enemy_accumulator_2 >= enemy_cooltime_2 && auto_enemy_2.size() < 10) {
             enemy_total_2++;
             enemy_accumulator_2 -= enemy_cooltime_2;
             std::uniform_real_distribution<double>speed_list_2(150, 250);
             line_speed_2.push_back(speed_list_2(rng));
-            if (reverse_2 == -1) {//负轨道,y=300-10sqrt(x+25),(600,50)->(0,250)
-                auto_enemy_2.append(QPointF(600, 50));
-                direction_2.push_back(reverse_2);
-                sign.push_back(-1);
-            }
-            else {//正轨道,y=300-10sqrt(625-x),(0,50)->(600,250)
+            if (reverse_2 == 1) {//正轨道,y=10sqrt(x+25),(0,50)->(600,250)
                 auto_enemy_2.append(QPointF(0, 50));
                 direction_2.push_back(reverse_2);
                 sign.push_back(1);
+            }
+            else {//负轨道,y=10sqrt(625-x),(600,50)->(0,250)
+                auto_enemy_2.append(QPointF(600, 50));
+                direction_2.push_back(reverse_2);
+                sign.push_back(-1);
             }
             reverse_2 = -reverse_2;//反转态
         }
