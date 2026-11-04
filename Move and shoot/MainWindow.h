@@ -119,7 +119,7 @@ private:
     //设计的每一组弹幕一共5发，只和当前敌机位置和自机位置有关，同时发射，速度从720-800分布
 
     QPointF boss_1;
-    int boss_1_blood = 1000;
+    int boss_1_blood = 10000;
     QPixmap boss_1_Img;
     int boss_1_speed = 150;
     QList<QPointF> Wheel;
@@ -168,6 +168,8 @@ private:
     std::vector<double>random_position_2;//记录范围内的发射位置
     std::vector<std::vector<double>>direction_bullet_2;//子弹运行方向
     std::vector<bool> cooldown_status_2;
+    double angle_now_2;
+    
 private slots://这是独有的语法，槽函数，专门接收信号的窗口
     void onTimerTick(); //定时器每次触发的函数，槽函数
 };
